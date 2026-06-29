@@ -44,13 +44,15 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['bronze', 'silver', 'gold']
+              arguments:
+                values: ['bronze', 'silver', 'gold']
       - name: acquisition_channel
         description: "Marketing channel through which the customer first registered."
         tests:
           - not_null
           - accepted_values:
-              values: ['organic', 'paid_search', 'referral', 'tv_ad']
+              arguments:
+                values: ['organic', 'paid_search', 'referral', 'tv_ad']
 
   - name: raw_products
     description: >
@@ -71,7 +73,8 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['Dairy & Eggs', 'Meat & Seafood', 'Fresh Produce', 'Bakery', 'Pantry', 'Beverages', 'Frozen']
+              arguments:
+                values: ['Dairy & Eggs', 'Meat & Seafood', 'Fresh Produce', 'Bakery', 'Pantry', 'Beverages', 'Frozen']
       - name: subcategory
         description: "More granular product classification within a category."
         tests: [not_null]
@@ -89,7 +92,8 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['Y', 'N']
+              arguments:
+                values: ['Y', 'N']
 
   - name: raw_orders
     description: >
@@ -105,15 +109,17 @@ seeds:
         tests:
           - not_null
           - relationships:
-              to: ref('raw_customers')
-              field: customer_id
+              arguments:
+                to: ref('raw_customers')
+                field: customer_id
       - name: cfc_id
         description: "Foreign key to raw_fulfilment_centres — the centre that picked the order."
         tests:
           - not_null
           - relationships:
-              to: ref('raw_fulfilment_centres')
-              field: cfc_id
+              arguments:
+                to: ref('raw_fulfilment_centres')
+                field: cfc_id
       - name: order_date
         description: "Calendar date on which the customer placed the order."
         tests: [not_null]
@@ -122,13 +128,15 @@ seeds:
         tests:
           - not_null
           - accepted_values:
-              values: ['morning', 'afternoon', 'evening']
+              arguments:
+                values: ['morning', 'afternoon', 'evening']
       - name: status
         description: "Current order status in the fulfilment lifecycle."
         tests:
           - not_null
           - accepted_values:
-              values: ['placing', 'picking', 'dispatched', 'delivered', 'cancelled']
+              arguments:
+                values: ['placing', 'picking', 'dispatched', 'delivered', 'cancelled']
       - name: promised_delivery_date
         description: "Date promised to the customer at checkout."
         tests: [not_null]
@@ -152,15 +160,17 @@ seeds:
         tests:
           - not_null
           - relationships:
-              to: ref('raw_orders')
-              field: order_id
+              arguments:
+                to: ref('raw_orders')
+                field: order_id
       - name: product_id
         description: "Foreign key to raw_products."
         tests:
           - not_null
           - relationships:
-              to: ref('raw_products')
-              field: product_id
+              arguments:
+                to: ref('raw_products')
+                field: product_id
       - name: quantity
         description: "Number of units of this product in the order."
         tests: [not_null]
@@ -169,7 +179,8 @@ seeds:
         tests:
           - not_null
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 1
-              max_value: 200000
+              arguments:
+                min_value: 1
+                max_value: 200000
       - name: picked_at
         description: "Timestamp when the robot picked this item in the fulfilment centre. Null for orders not yet in picking."

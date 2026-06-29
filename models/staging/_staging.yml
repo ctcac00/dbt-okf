@@ -20,13 +20,15 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['bronze', 'silver', 'gold']
+              arguments:
+                values: ['bronze', 'silver', 'gold']
       - name: acquisition_channel
         description: "Marketing channel that drove customer registration."
         tests:
           - not_null
           - accepted_values:
-              values: ['organic', 'paid_search', 'referral', 'tv_ad']
+              arguments:
+                values: ['organic', 'paid_search', 'referral', 'tv_ad']
 
   - name: stg_products
     description: >
@@ -54,8 +56,9 @@ models:
         tests:
           - not_null
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 1
-              max_value: 200000
+              arguments:
+                min_value: 1
+                max_value: 200000
       - name: cost_pence
         description: "Supplier cost price in pence sterling."
         tests: [not_null]
@@ -86,15 +89,17 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('stg_customers')
-              field: customer_id
+              arguments:
+                to: ref('stg_customers')
+                field: customer_id
       - name: cfc_id
         description: "Fulfilment centre that picked this order."
         tests:
           - not_null
           - relationships:
-              to: ref('stg_fulfilment_centres')
-              field: cfc_id
+              arguments:
+                to: ref('stg_fulfilment_centres')
+                field: cfc_id
       - name: order_date
         description: "Calendar date the customer placed the order."
         tests: [not_null]
@@ -103,13 +108,15 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['morning', 'afternoon', 'evening']
+              arguments:
+                values: ['morning', 'afternoon', 'evening']
       - name: status
         description: "Current position in the fulfilment lifecycle."
         tests:
           - not_null
           - accepted_values:
-              values: ['placing', 'picking', 'dispatched', 'delivered', 'cancelled']
+              arguments:
+                values: ['placing', 'picking', 'dispatched', 'delivered', 'cancelled']
       - name: promised_delivery_date
         description: "Delivery date shown to the customer at checkout."
         tests: [not_null]
@@ -137,15 +144,17 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('stg_orders')
-              field: order_id
+              arguments:
+                to: ref('stg_orders')
+                field: order_id
       - name: product_id
         description: "Foreign key to stg_products."
         tests:
           - not_null
           - relationships:
-              to: ref('stg_products')
-              field: product_id
+              arguments:
+                to: ref('stg_products')
+                field: product_id
       - name: quantity
         description: "Units of this product included in the order."
         tests: [not_null]

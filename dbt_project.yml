@@ -1,8 +1,8 @@
-name: 'grocery_ops_demo'
-version: '1.0.0'
+name: "grocery_ops_demo"
+version: "1.0.0"
 config-version: 2
 
-profile: 'grocery_ops_demo'
+profile: "grocery_ops_demo"
 
 model-paths: ["models"]
 seed-paths: ["seeds"]
@@ -29,4 +29,4 @@ models:
 
 seeds:
   grocery_ops_demo:
-    +schema: raw
+    +schema: grocery_ops_demo_sources

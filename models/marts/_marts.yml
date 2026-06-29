@@ -28,13 +28,15 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['morning', 'afternoon', 'evening']
+              arguments:
+                values: ['morning', 'afternoon', 'evening']
       - name: status
         description: "Current fulfilment status."
         tests:
           - not_null
           - accepted_values:
-              values: ['placing', 'picking', 'dispatched', 'delivered', 'cancelled']
+              arguments:
+                values: ['placing', 'picking', 'dispatched', 'delivered', 'cancelled']
       - name: promised_delivery_date
         description: "Delivery date shown to the customer at checkout."
       - name: actual_delivery_date
@@ -58,16 +60,18 @@ models:
         description: "Gross margin as a proportion of revenue. Null for orders with no items."
         tests:
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 0
-              max_value: 1
-              row_condition: "margin_pct is not null"
+              arguments:
+                min_value: 0
+                max_value: 1
+                row_condition: "margin_pct is not null"
       - name: total_line_items
         description: "Number of distinct product lines in the order."
       - name: loyalty_tier
         description: "Customer loyalty tier at time of data load: bronze, silver, or gold."
         tests:
           - accepted_values:
-              values: ['bronze', 'silver', 'gold']
+              arguments:
+                values: ['bronze', 'silver', 'gold']
       - name: acquisition_channel
         description: "Marketing channel that drove the customer's registration."
       - name: postcode_prefix
@@ -114,9 +118,10 @@ models:
         description: "Proportion of delivered orders that were on time. Null if no confirmed deliveries."
         tests:
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 0
-              max_value: 1
-              row_condition: "weekly_on_time_rate is not null"
+              arguments:
+                min_value: 0
+                max_value: 1
+                row_condition: "weekly_on_time_rate is not null"
       - name: avg_daily_throughput_pct
         description: >
           Average of daily (orders_fulfilled / capacity_orders_per_day) across the week.
