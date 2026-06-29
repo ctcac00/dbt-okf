@@ -7,3 +7,4 @@ terraform/*.tfvars
 terraform/.terraform/
 terraform/.terraform.lock.hcl
 dbt_internal_packages/
+/terraform/terraform.tfstate

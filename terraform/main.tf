@@ -2,7 +2,7 @@ terraform {
   required_providers {
     dbtcloud = {
       source  = "dbt-labs/dbtcloud"
-      version = "~> 0.3"
+      version = "= 1.12.3"
     }
   }
 }
@@ -10,7 +10,7 @@ terraform {
 provider "dbtcloud" {
   account_id = var.dbt_account_id
   token      = var.dbt_service_token
-  host_url   = "https://cloud.getdbt.com"   # or your Access URL if on a custom domain
+  host_url   = "https://sa318.eu1.dbt.com/api"
 }
 
 resource "dbtcloud_project" "demo" {
