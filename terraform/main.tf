@@ -25,10 +25,11 @@ resource "dbtcloud_environment" "dev" {
 }
 
 resource "dbtcloud_environment" "prod" {
-  project_id  = dbtcloud_project.demo.id
-  name        = "Production"
-  dbt_version = "versionless"
-  type        = "deployment"
+  project_id      = dbtcloud_project.demo.id
+  name            = "Production"
+  dbt_version     = "versionless"
+  type            = "deployment"
+  deployment_type = "production"
 }
 
 resource "dbtcloud_job" "daily_build" {
