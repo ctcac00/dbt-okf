@@ -1,0 +1,90 @@
+version: 2
+
+models:
+  - name: int_order_details
+    description: >
+      Order-level enrichment joining orders, line items, and product costs.
+      Produces gross revenue, cost, and margin per order in both pence and GBP.
+      margin_pct uses safe_divide to handle orders with no items (null rather than divide-by-zero).
+      Ephemeral — consumed only by mart models, never written to the warehouse directly.
+    columns:
+      - name: order_id
+        description: "Unique order identifier. Primary key."
+        tests: [not_null, unique]
+      - name: customer_id
+        description: "Customer who placed the order."
+        tests: [not_null]
+      - name: cfc_id
+        description: "Fulfilment centre that processed the order."
+        tests: [not_null]
+      - name: order_date
+        description: "Calendar date the order was placed."
+        tests: [not_null]
+      - name: delivery_slot
+        description: "Requested delivery time window."
+        tests: [not_null]
+      - name: status
+        description: "Current fulfilment status."
+        tests: [not_null]
+      - name: promised_delivery_date
+        description: "Delivery date committed to the customer."
+      - name: actual_delivery_date
+        description: "Date the order was delivered. Null for undelivered orders."
+      - name: is_on_time
+        description: "True if delivered on or before promised date. Null if not yet delivered."
+      - name: updated_at
+        description: "Most recent status change timestamp. Incremental watermark."
+        tests: [not_null]
+      - name: total_revenue_pence
+        description: "Sum of quantity × unit_price_pence across all line items."
+      - name: total_cost_pence
+        description: "Sum of quantity × supplier cost_pence across all line items."
+      - name: total_margin_pence
+        description: "Gross margin in pence: total_revenue_pence − total_cost_pence."
+      - name: total_revenue_gbp
+        description: "Gross revenue in pounds sterling, rounded to 2dp."
+      - name: total_margin_gbp
+        description: "Gross margin in pounds sterling, rounded to 2dp."
+      - name: margin_pct
+        description: "Margin as a proportion of revenue. Null for orders with no line items."
+      - name: total_line_items
+        description: "Number of distinct product lines in the order."
+
+  - name: int_cfc_daily_orders
+    description: >
+      Daily operational summary per fulfilment centre. Aggregates order counts and
+      on-time delivery metrics, then joins CFC reference data for capacity context.
+      Cancelled orders are excluded — only active fulfilment pipeline orders are included.
+      Ephemeral — feeds directly into fct_cfc_weekly_performance.
+    columns:
+      - name: cfc_id
+        description: "Fulfilment centre identifier."
+        tests: [not_null]
+      - name: cfc_name
+        description: "Human-readable centre name."
+        tests: [not_null]
+      - name: region
+        description: "Geographic region of the centre."
+        tests: [not_null]
+      - name: capacity_orders_per_day
+        description: "Centre's designed maximum daily throughput."
+        tests: [not_null]
+      - name: robot_fleet_size
+        description: "Number of picking robots deployed."
+        tests: [not_null]
+      - name: order_date
+        description: "Calendar date these metrics cover."
+        tests: [not_null]
+      - name: orders_fulfilled
+        description: "Number of non-cancelled orders processed by the centre on this date."
+        tests: [not_null]
+      - name: on_time_deliveries
+        description: "Count of orders delivered on or before their promised date."
+        tests: [not_null]
+      - name: delivered_orders
+        description: "Count of orders that have an actual delivery date (i.e. confirmed delivered)."
+        tests: [not_null]
+      - name: on_time_rate
+        description: "Proportion of delivered orders that were on time. Null if no deliveries confirmed."
+      - name: throughput_pct
+        description: "orders_fulfilled as a fraction of capacity_orders_per_day. Indicates how hard the centre was working."

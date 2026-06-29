@@ -1,0 +1,26 @@
+product_id,sku,name,category,subcategory,unit_price_pence,cost_pence,weight_g,is_chilled
+PRD001,SKU-001,Whole Milk 2L,Dairy & Eggs,Milk,135,89,2000,Y
+PRD002,SKU-002,Free Range Eggs 12pk,Dairy & Eggs,Eggs,299,189,720,Y
+PRD003,SKU-003,Salted Butter 250g,Dairy & Eggs,Butter,185,120,250,Y
+PRD004,SKU-004,Cheddar Cheese 400g,Dairy & Eggs,Cheese,350,220,400,Y
+PRD005,SKU-005,Chicken Breast 500g,Meat & Seafood,Poultry,499,310,500,Y
+PRD006,SKU-006,Beef Mince 500g,Meat & Seafood,Beef,450,290,500,Y
+PRD007,SKU-007,Atlantic Salmon 300g,Meat & Seafood,Fish,595,380,300,Y
+PRD008,SKU-008,Streaky Bacon 300g,Meat & Seafood,Pork,325,210,300,Y
+PRD009,SKU-009,Broccoli 400g,Fresh Produce,Vegetables,129,79,400,Y
+PRD010,SKU-010,Bananas 5pk,Fresh Produce,Fruit,89,52,600,N
+PRD011,SKU-011,Baby Spinach 200g,Fresh Produce,Salad,149,91,200,Y
+PRD012,SKU-012,Cherry Tomatoes 300g,Fresh Produce,Vegetables,179,109,300,Y
+PRD013,SKU-013,Sourdough Loaf 800g,Bakery,Bread,299,185,800,N
+PRD014,SKU-014,Croissants 4pk,Bakery,Pastry,249,155,220,N
+PRD015,SKU-015,Pasta Penne 500g,Pantry,Pasta,149,89,500,N
+PRD016,SKU-016,Tinned Tomatoes 400g,Pantry,Canned Goods,89,52,400,N
+PRD017,SKU-017,Olive Oil 500ml,Pantry,Oils,549,340,550,N
+PRD018,SKU-018,Basmati Rice 1kg,Pantry,Grains,249,149,1000,N
+PRD019,SKU-019,Orange Juice 1L,Beverages,Juice,199,122,1000,Y
+PRD020,SKU-020,Sparkling Water 6pk,Beverages,Water,349,210,3600,N
+PRD021,SKU-021,Coffee Beans 250g,Beverages,Coffee,899,549,250,N
+PRD022,SKU-022,Frozen Peas 900g,Frozen,Vegetables,199,119,900,Y
+PRD023,SKU-023,Ice Cream Vanilla 1L,Frozen,Desserts,395,245,1000,Y
+PRD024,SKU-024,Frozen Pizza Margherita,Frozen,Pizza,449,275,450,Y
+PRD025,SKU-025,Greek Yoghurt 500g,Dairy & Eggs,Yoghurt,249,155,500,Y

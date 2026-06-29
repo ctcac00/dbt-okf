@@ -1,0 +1,8 @@
+target/
+dbt_packages/
+logs/
+.env
+profiles.yml
+terraform/*.tfvars
+terraform/.terraform/
+terraform/.terraform.lock.hcl

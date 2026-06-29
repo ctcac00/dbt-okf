@@ -1,0 +1,7 @@
+cfc_id,name,region,capacity_orders_per_day,robot_fleet_size,opened_date
+CFC001,Northern Hub,North West,8000,1050,2018-03-01
+CFC002,Southern Hub,South East,12000,1800,2019-11-01
+CFC003,Midlands Hub,West Midlands,6500,900,2021-06-01
+CFC004,Eastern Hub,East of England,5000,600,2022-09-01
+CFC005,Scottish Hub,Scotland,4000,500,2023-04-01
+CFC006,Western Hub,Wales,3000,400,2024-01-01

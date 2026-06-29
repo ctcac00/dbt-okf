@@ -1,0 +1,175 @@
+version: 2
+
+seeds:
+  - name: raw_fulfilment_centres
+    description: >
+      Static reference data for each automated fulfilment centre (CFC).
+      Contains capacity and fleet metadata used to calculate throughput utilisation.
+    columns:
+      - name: cfc_id
+        description: "Unique identifier for the fulfilment centre."
+        tests: [not_null, unique]
+      - name: name
+        description: "Human-readable name of the centre used in reporting."
+        tests: [not_null]
+      - name: region
+        description: "Geographic region in which the centre operates."
+        tests: [not_null]
+      - name: capacity_orders_per_day
+        description: "Maximum number of orders the centre can fulfil per day at full robot utilisation."
+        tests: [not_null]
+      - name: robot_fleet_size
+        description: "Number of autonomous picking robots deployed in the centre."
+        tests: [not_null]
+      - name: opened_date
+        description: "Date the centre became operational."
+        tests: [not_null]
+
+  - name: raw_customers
+    description: >
+      Raw customer account records. One row per registered customer.
+      Postcode prefix is stored rather than the full postcode to protect PII.
+    columns:
+      - name: customer_id
+        description: "Unique customer identifier."
+        tests: [not_null, unique]
+      - name: signup_date
+        description: "Date the customer created their account."
+        tests: [not_null]
+      - name: postcode_prefix
+        description: "First segment of the delivery postcode (e.g. SW, M, LS). Used for regional analysis."
+        tests: [not_null]
+      - name: loyalty_tier
+        description: "Customer loyalty programme tier at time of data extraction."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['bronze', 'silver', 'gold']
+      - name: acquisition_channel
+        description: "Marketing channel through which the customer first registered."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['organic', 'paid_search', 'referral', 'tv_ad']
+
+  - name: raw_products
+    description: >
+      Product catalogue with pricing and cost data. Unit prices are in pence sterling.
+      is_chilled indicates whether the product requires cold-chain handling.
+    columns:
+      - name: product_id
+        description: "Unique product identifier."
+        tests: [not_null, unique]
+      - name: sku
+        description: "Stock-keeping unit code used in warehouse management systems."
+        tests: [not_null, unique]
+      - name: name
+        description: "Consumer-facing product name."
+        tests: [not_null]
+      - name: category
+        description: "Top-level product category (e.g. Dairy & Eggs, Fresh Produce)."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Dairy & Eggs', 'Meat & Seafood', 'Fresh Produce', 'Bakery', 'Pantry', 'Beverages', 'Frozen']
+      - name: subcategory
+        description: "More granular product classification within a category."
+        tests: [not_null]
+      - name: unit_price_pence
+        description: "Retail selling price in pence sterling."
+        tests: [not_null]
+      - name: cost_pence
+        description: "Supplier cost price in pence sterling. Used to calculate gross margin."
+        tests: [not_null]
+      - name: weight_g
+        description: "Product weight in grams. Used for logistics and delivery slot capacity planning."
+        tests: [not_null]
+      - name: is_chilled
+        description: "Y if the product requires refrigerated storage and cold-chain delivery, N otherwise."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Y', 'N']
+
+  - name: raw_orders
+    description: >
+      Raw order records covering the full lifecycle from placement through delivery.
+      actual_delivery_date is null for orders not yet delivered.
+      Cancelled orders retain their promised_delivery_date for SLA analysis.
+    columns:
+      - name: order_id
+        description: "Unique order identifier."
+        tests: [not_null, unique]
+      - name: customer_id
+        description: "Foreign key to raw_customers."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('raw_customers')
+              field: customer_id
+      - name: cfc_id
+        description: "Foreign key to raw_fulfilment_centres — the centre that picked the order."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('raw_fulfilment_centres')
+              field: cfc_id
+      - name: order_date
+        description: "Calendar date on which the customer placed the order."
+        tests: [not_null]
+      - name: delivery_slot
+        description: "Time window requested for delivery."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['morning', 'afternoon', 'evening']
+      - name: status
+        description: "Current order status in the fulfilment lifecycle."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['placing', 'picking', 'dispatched', 'delivered', 'cancelled']
+      - name: promised_delivery_date
+        description: "Date promised to the customer at checkout."
+        tests: [not_null]
+      - name: actual_delivery_date
+        description: "Date the order was actually delivered. Null for undelivered orders."
+      - name: updated_at
+        description: "Timestamp of the most recent status change. Used as the watermark for incremental loads."
+        tests: [not_null]
+
+  - name: raw_order_items
+    description: >
+      Individual line items within each order. One row per product per order.
+      unit_price_pence is the price charged to the customer at the time of the order,
+      which may differ from the current catalogue price in raw_products.
+    columns:
+      - name: item_id
+        description: "Unique line item identifier."
+        tests: [not_null, unique]
+      - name: order_id
+        description: "Foreign key to raw_orders."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('raw_orders')
+              field: order_id
+      - name: product_id
+        description: "Foreign key to raw_products."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('raw_products')
+              field: product_id
+      - name: quantity
+        description: "Number of units of this product in the order."
+        tests: [not_null]
+      - name: unit_price_pence
+        description: "Price per unit charged to the customer at order time, in pence sterling."
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1
+              max_value: 200000
+      - name: picked_at
+        description: "Timestamp when the robot picked this item in the fulfilment centre. Null for orders not yet in picking."

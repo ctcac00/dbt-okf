@@ -1,0 +1,183 @@
+version: 2
+
+models:
+  - name: stg_customers
+    description: >
+      Cleaned and typed customer records. One row per registered customer.
+      Loyalty tier and acquisition channel are normalised to lowercase.
+    columns:
+      - name: customer_id
+        description: "Unique customer identifier."
+        tests: [not_null, unique]
+      - name: signup_date
+        description: "Date the customer created their account."
+        tests: [not_null]
+      - name: postcode_prefix
+        description: "First segment of the delivery postcode. Used for regional cohort analysis."
+        tests: [not_null]
+      - name: loyalty_tier
+        description: "Loyalty programme tier: bronze, silver, or gold."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['bronze', 'silver', 'gold']
+      - name: acquisition_channel
+        description: "Marketing channel that drove customer registration."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['organic', 'paid_search', 'referral', 'tv_ad']
+
+  - name: stg_products
+    description: >
+      Cleaned product catalogue with prices converted from pence to pounds.
+      unit_price_gbp and cost_gbp are derived columns used downstream for margin calculations.
+      is_chilled is cast to boolean; true means the product requires cold-chain handling.
+    columns:
+      - name: product_id
+        description: "Unique product identifier."
+        tests: [not_null, unique]
+      - name: sku
+        description: "Stock-keeping unit code."
+        tests: [not_null, unique]
+      - name: product_name
+        description: "Consumer-facing product name."
+        tests: [not_null]
+      - name: category
+        description: "Top-level product category."
+        tests: [not_null]
+      - name: subcategory
+        description: "Granular classification within a category."
+        tests: [not_null]
+      - name: unit_price_pence
+        description: "Retail selling price in pence sterling."
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1
+              max_value: 200000
+      - name: cost_pence
+        description: "Supplier cost price in pence sterling."
+        tests: [not_null]
+      - name: unit_price_gbp
+        description: "Retail selling price in pounds sterling, rounded to 2 decimal places."
+        tests: [not_null]
+      - name: cost_gbp
+        description: "Supplier cost price in pounds sterling, rounded to 2 decimal places."
+        tests: [not_null]
+      - name: weight_g
+        description: "Product weight in grams."
+        tests: [not_null]
+      - name: is_chilled
+        description: "True if the product requires refrigerated storage and cold-chain delivery."
+        tests: [not_null]
+
+  - name: stg_orders
+    description: >
+      Cleaned order records spanning the full fulfilment lifecycle.
+      is_on_time is derived at staging: true if actual_delivery_date <= promised_delivery_date,
+      false if late, null if the order has not yet been delivered.
+    columns:
+      - name: order_id
+        description: "Unique order identifier."
+        tests: [not_null, unique]
+      - name: customer_id
+        description: "Foreign key to stg_customers."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_customers')
+              field: customer_id
+      - name: cfc_id
+        description: "Fulfilment centre that picked this order."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_fulfilment_centres')
+              field: cfc_id
+      - name: order_date
+        description: "Calendar date the customer placed the order."
+        tests: [not_null]
+      - name: delivery_slot
+        description: "Requested delivery time window: morning, afternoon, or evening."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['morning', 'afternoon', 'evening']
+      - name: status
+        description: "Current position in the fulfilment lifecycle."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['placing', 'picking', 'dispatched', 'delivered', 'cancelled']
+      - name: promised_delivery_date
+        description: "Delivery date shown to the customer at checkout."
+        tests: [not_null]
+      - name: actual_delivery_date
+        description: "Date the order was physically delivered. Null until delivery is confirmed."
+      - name: updated_at
+        description: "Timestamp of the most recent status change. Watermark for incremental loads."
+        tests: [not_null]
+      - name: is_on_time
+        description: >
+          Delivery punctuality flag. True = delivered on or before promised date.
+          False = delivered late. Null = not yet delivered or cancelled.
+
+  - name: stg_order_items
+    description: >
+      Individual line items within each order. One row per product per order.
+      unit_price_pence captures the price charged at order time, which may differ from
+      the current catalogue price, preserving accurate historical margin calculations.
+    columns:
+      - name: item_id
+        description: "Unique line item identifier."
+        tests: [not_null, unique]
+      - name: order_id
+        description: "Foreign key to stg_orders."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_orders')
+              field: order_id
+      - name: product_id
+        description: "Foreign key to stg_products."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_products')
+              field: product_id
+      - name: quantity
+        description: "Units of this product included in the order."
+        tests: [not_null]
+      - name: unit_price_pence
+        description: "Price per unit charged at the time of order, in pence sterling."
+        tests: [not_null]
+      - name: unit_price_gbp
+        description: "Price per unit at order time, in pounds sterling."
+        tests: [not_null]
+      - name: picked_at
+        description: "Timestamp when the robot picked this item. Null if not yet picked."
+
+  - name: stg_fulfilment_centres
+    description: >
+      Reference data for each automated fulfilment centre. Includes capacity and fleet size,
+      which are used in operational KPI calculations to measure throughput utilisation.
+    columns:
+      - name: cfc_id
+        description: "Unique fulfilment centre identifier."
+        tests: [not_null, unique]
+      - name: cfc_name
+        description: "Human-readable centre name used in reports and dashboards."
+        tests: [not_null]
+      - name: region
+        description: "Geographic region served by this centre."
+        tests: [not_null]
+      - name: capacity_orders_per_day
+        description: "Designed daily order throughput at full robot utilisation."
+        tests: [not_null]
+      - name: robot_fleet_size
+        description: "Number of autonomous picking robots in the centre."
+        tests: [not_null]
+      - name: opened_date
+        description: "Date the centre became operationally live."
+        tests: [not_null]

@@ -1,0 +1,32 @@
+name: 'grocery_ops_demo'
+version: '1.0.0'
+config-version: 2
+
+profile: 'grocery_ops_demo'
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  grocery_ops_demo:
+    staging:
+      +materialized: view
+      +schema: staging
+    intermediate:
+      +materialized: ephemeral
+    marts:
+      +materialized: table
+      +schema: marts
+    +transient: false
+
+seeds:
+  grocery_ops_demo:
+    +schema: raw

@@ -1,0 +1,123 @@
+version: 2
+
+models:
+  - name: fct_orders
+    description: >
+      Incremental fact table: one row per order enriched with customer and CFC context.
+      Updated on each dbt run by filtering on updated_at, making it efficient for daily
+      refreshes over large order volumes. Consumed by commercial and operations dashboards.
+      order_key is a surrogate key generated via dbt_utils.generate_surrogate_key.
+    columns:
+      - name: order_key
+        description: "Surrogate key generated from order_id. Stable identifier for BI joins."
+        tests: [not_null, unique]
+      - name: order_id
+        description: "Natural order identifier from the source system."
+        tests: [not_null, unique]
+      - name: customer_id
+        description: "Customer who placed the order."
+        tests: [not_null]
+      - name: cfc_id
+        description: "Fulfilment centre that processed the order."
+        tests: [not_null]
+      - name: order_date
+        description: "Date the order was placed."
+        tests: [not_null]
+      - name: delivery_slot
+        description: "Requested delivery time window: morning, afternoon, or evening."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['morning', 'afternoon', 'evening']
+      - name: status
+        description: "Current fulfilment status."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['placing', 'picking', 'dispatched', 'delivered', 'cancelled']
+      - name: promised_delivery_date
+        description: "Delivery date shown to the customer at checkout."
+      - name: actual_delivery_date
+        description: "Date the order was physically delivered. Null until confirmed."
+      - name: is_on_time
+        description: "Delivery punctuality: true = on time, false = late, null = not yet delivered."
+      - name: updated_at
+        description: "Most recent status change timestamp. Used as incremental watermark."
+        tests: [not_null]
+      - name: total_revenue_pence
+        description: "Gross order revenue in pence sterling."
+      - name: total_cost_pence
+        description: "Total supplier cost for all items in the order, in pence."
+      - name: total_margin_pence
+        description: "Gross margin in pence: revenue minus cost."
+      - name: total_revenue_gbp
+        description: "Gross order revenue in pounds sterling."
+      - name: total_margin_gbp
+        description: "Gross margin in pounds sterling."
+      - name: margin_pct
+        description: "Gross margin as a proportion of revenue. Null for orders with no items."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1
+              row_condition: "margin_pct is not null"
+      - name: total_line_items
+        description: "Number of distinct product lines in the order."
+      - name: loyalty_tier
+        description: "Customer loyalty tier at time of data load: bronze, silver, or gold."
+        tests:
+          - accepted_values:
+              values: ['bronze', 'silver', 'gold']
+      - name: acquisition_channel
+        description: "Marketing channel that drove the customer's registration."
+      - name: postcode_prefix
+        description: "Delivery area postcode prefix. Used for regional revenue analysis."
+      - name: cfc_name
+        description: "Name of the fulfilment centre that processed this order."
+      - name: region
+        description: "Geographic region of the fulfilment centre."
+
+  - name: fct_cfc_weekly_performance
+    description: >
+      Weekly operational KPI summary per fulfilment centre. Aggregates daily order
+      counts, on-time delivery rates, and average throughput utilisation. Intended for
+      operations leadership to track centre health and identify capacity pressure points.
+    columns:
+      - name: cfc_id
+        description: "Fulfilment centre identifier."
+        tests: [not_null]
+      - name: cfc_name
+        description: "Human-readable centre name."
+        tests: [not_null]
+      - name: region
+        description: "Geographic region of the centre."
+        tests: [not_null]
+      - name: capacity_orders_per_day
+        description: "Centre's designed maximum daily throughput."
+        tests: [not_null]
+      - name: robot_fleet_size
+        description: "Number of picking robots deployed in the centre."
+        tests: [not_null]
+      - name: week_start
+        description: "Monday date marking the start of the reporting week."
+        tests: [not_null]
+      - name: weekly_orders
+        description: "Total non-cancelled orders processed by the centre during the week."
+        tests: [not_null]
+      - name: weekly_on_time_deliveries
+        description: "Count of orders delivered on or before their promised date."
+        tests: [not_null]
+      - name: weekly_delivered_orders
+        description: "Count of orders with a confirmed delivery date during the week."
+        tests: [not_null]
+      - name: weekly_on_time_rate
+        description: "Proportion of delivered orders that were on time. Null if no confirmed deliveries."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1
+              row_condition: "weekly_on_time_rate is not null"
+      - name: avg_daily_throughput_pct
+        description: >
+          Average of daily (orders_fulfilled / capacity_orders_per_day) across the week.
+          Values above 1.0 indicate the centre operated beyond its designed capacity.
